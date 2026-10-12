@@ -1,0 +1,27 @@
+name: Security regression checks
+
+on:
+  push:
+    branches: [main, "modernize/**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  safe-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install isolated webhook test dependencies
+        run: python -m pip install "Flask>=2.2,<4" "requests>=2.28,<3"
+      - name: Compile application modules without importing or executing them
+        run: python -m compileall -q -f Main.py ExchangeClients.py exchanges.py database.py models.py app.py helperfunctions.py makestatement.py texts.py trading_bot tests
+      - name: Run offline security regression tests
+        run: python -m unittest discover -s tests -v
